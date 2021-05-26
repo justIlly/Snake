@@ -1,0 +1,167 @@
+#include <iostream>
+#include <conio.h>                       //для чтения нажатия клавиши
+
+using namespace std;
+
+bool game;
+const int width = 20;
+const int height = 20;
+int x, y;                                //координаты головы змеи
+int applex, appley;                      //координаты яблока
+int Ntail;                               //количество элементов хвоста
+int tailx[100], taily[100];              //координаты хвоста змеи
+int score;
+enum eDirection { STOP = 0, LEFT, RIGHT, UP, DOWN };
+eDirection dir;
+
+void Setup()                             //запуск программы
+{
+	game = false;
+	score = 0;
+	dir = STOP;                          //изначально змея не двигается
+	x = width / 2 - 1;                   //изначальное положение головы змеи в центре карты
+	y = height / 2 - 1;
+	applex = rand() % width;             //вычисление случайной позиции яблока на карте
+	appley = rand() % height;
+
+}
+
+void Map()                               //отрисовка компонентов карты
+{
+	system("cls");                       //очистка терминала при каждом запуске игры
+										 //отрисовка границ карты вида "###########"
+	for (int i = 0; i < width + 1; i++)
+		cout << "#";
+	cout << "            " << "Score: " << score;
+	cout << endl;
+
+	for (int i = 0; i < height; i++) {
+		for (int j = 0; j < width; j++) {
+			if (j == 0 || j == width - 1)
+				cout << "#";
+			if (i == y && j == x)                     //постановка головы змеи по центру
+				cout << "Z";
+			else if (i == appley && j == applex)      //постановка яблока в случайную позицию
+				cout << "A";
+			else {
+				bool p = false;
+				for (int k = 0; k < Ntail; k++)              //отрисовка хвоста
+					if (tailx[k] == j && taily[k] == i) {
+						p = true;
+						cout << "*";
+					}
+				if (!p)
+					cout << " ";
+			}
+		}
+		cout << endl;
+	}
+
+	for (int i = 0; i < width + 1; i++)
+		cout << "#";
+	cout << endl;
+}
+
+void Input()                             //отслеживание нажатий
+{
+	if (_kbhit()) {                      //_kbhit возвращает true, если пользователь нажал на клавишу
+		switch (_getch())                //_getch отслеживает какую именно клавишу нажал пользователь 
+		{
+		case 'a':
+			dir = LEFT;
+			break;
+		case 75:
+			dir = LEFT;
+			break;
+		case 'd':
+			dir = RIGHT;
+			break;
+		case 77:
+			dir = RIGHT;
+			break;
+		case 'w':
+			dir = UP;
+			break;
+		case 72:
+			dir = UP;
+			break;
+		case 's':
+			dir = DOWN;
+			break;
+		case 80:
+			dir = DOWN;
+			break;
+		case 27:                          //при нажатии клавиши "Esc", игра заканчивается
+			game = true;
+			break;
+		}
+	}
+}
+
+void Logic()                             //логика игры
+{
+	                                              //логика хвоста
+	int prevx = tailx[0];                         //первый элемент хвоста
+	int prevy = taily[0];
+	int prevxx, prevyy;
+	tailx[0] = x; taily[0] = y;
+	for (int i = 1; i < Ntail; i++) {
+		prevxx = tailx[i];                        //последующие элементы хвоста
+		prevyy = taily[i];
+		tailx[i] = prevx;
+		taily[i] = prevy;
+		prevx = prevxx;
+		prevy = prevyy;
+	}
+
+	                                              //реализация движения змеи
+	switch (dir)
+	{
+	case LEFT:
+		x--;
+		break;
+	case RIGHT:
+		x++;
+		break;
+	case UP:
+		y--;
+		break;
+	case DOWN:
+		y++;
+		break;
+	}
+	                                                    //проверка выхода за границы карты
+	if (x >= width-1)                                   //в случае выхода за границу карты
+		x = 0;                                          //змейка появляется с противоположной
+	else if (x < 0)                                     //стороны
+		x = width - 2;                                  //-2, так если будет -1, то змейка выйдет
+	if (y >= height)                                    //за границы карты (в строке 23 прибавляем
+		y = 0;                                          //к width 1, чтобы граница поля выглядела
+	else if (y < 0)                                     //лучше)
+		y = height - 1;
+
+	for (int i = 0; i < Ntail; i++) {
+		if (tailx[i] == x && taily[i] == y)
+			game = true;
+	}
+	                                                    //"поедание яблок"
+	if (x == applex && y == appley) {
+		applex = rand() % width;
+		appley = rand() % height;
+		Ntail++;
+		score += 1 * Ntail;
+	}
+}
+
+int main()
+{
+	Setup();
+	while (!game)                    //пока игра не завершена выполняются все функции
+	{
+		Map();
+		Input();
+		Logic();
+	}
+
+	return(0);
+}
